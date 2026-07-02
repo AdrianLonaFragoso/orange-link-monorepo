@@ -1,0 +1,6 @@
+[submodule "orange-link-apollo"]
+	path = orange-link-apollo
+	url = https://github.com/AdrianLonaFragoso/orange-link-apollo.git
+[submodule "orange-link-back"]
+	path = orange-link-back
+	url = https://github.com/AdrianLonaFragoso/orange-link-back.git
