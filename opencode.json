@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md"],
+  "references": {
+    "app": {
+      "path": "orange-link-app",
+      "description": "Frontend React PWA del asistente de salud Orange Link. Contiene componentes, screens, hooks, API client, estilos Tailwind. Úsalo para consultar UI, estado global y llamadas al backend."
+    },
+    "back": {
+      "path": "orange-link-back",
+      "description": "Backend Express + Prisma + PostgreSQL de Orange Link. Contiene rutas API, controladores, modelos de BD, middlewares. Úsalo para consultar endpoints, esquema de DB y lógica de negocio."
+    }
+  },
+  "skills": {
+    "paths": [".opencode/skills"]
+  }
+}

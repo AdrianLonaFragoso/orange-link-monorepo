@@ -1,0 +1,11 @@
+{
+  "name": "orange-link",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n app,back -c cyan,green \"npm run dev --prefix orange-link-app\" \"npm run dev --prefix orange-link-back\"",
+    "setup": "cd orange-link-app && npm install && cd ../orange-link-back && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
