@@ -23,7 +23,7 @@ Orange Link es un asistente de salud y fitness compuesto por dos proyectos:
 - Ubicación: `dev/package.json`
 - Usa `concurrently` para ejecutar frontend y backend con un solo comando
 - Script `dev`: corre ambos proyectos en paralelo con prefijos `[app]` y `[back]`
-- Script `setup`: instala dependencias en ambos subproyectos
+- Script `setup`: instala dependencias del root + ambos subproyectos
 
 ---
 
@@ -334,4 +334,4 @@ cd orange-link-app && npm run dev
 | Backend | `npm run prisma:seed` | Seed data |
 | Backend | `npm run prisma:push` | Push schema a DB |
 | Root | `npm run dev` | Frontend + Backend en paralelo (concurrently) |
-| Root | `npm run setup` | Instalar deps en ambos proyectos |
+| Root | `npm run setup` | Instalar deps del root + ambos subproyectos |
