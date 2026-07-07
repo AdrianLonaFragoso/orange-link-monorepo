@@ -96,3 +96,38 @@ cd orange-link-apollo && npm run dev
 ## Comunicación App ↔ Back
 
 El frontend usa `src/lib/api.ts` para comunicarse con el backend mediante fetch. Sigue un patrón de optimistic updates: actualiza localStorage primero y envía la petición al backend en segundo plano (fire-and-forget).
+
+## Flujo de trabajo con submodules
+
+El monorepo contiene dos **git submodules** (`orange-link-apollo` y `orange-link-back`).
+Cada submodule apunta a un **commit específico** de su propio repo. No se hace push directo desde el monorepo a los submodules.
+
+### Modificaste código en un submodule
+
+```bash
+# 1. Ir al submodule, commitear y pushear
+cd orange-link-apollo
+git add .
+git commit -m "feat: descripción del cambio"
+git push origin main
+
+# 2. Volver al monorepo, actualizar la referencia y pushear
+cd ..
+git add orange-link-apollo
+git commit -m "chore: actualizar referencia de orange-link-apollo"
+git push origin main
+```
+
+### Clonaste fresco y quieres trabajar en submodules
+
+```bash
+git submodule update --init --recursive
+cd orange-link-apollo
+git checkout -b main origin/main
+```
+
+### Consejos clave
+
+- **Siempre pushear los submodules primero**, luego el monorepo. Si pusheas el monorepo sin pushear los submodules, quien clone tendrá referencias rotas.
+- Para evitar detached HEAD, haz `git checkout main` dentro de cada submodule antes de empezar a trabajar.
+- `git status` en la raíz mostrará `(modified content)` en los submodules cuando el commit apuntado no coincida con el del repo remoto.
