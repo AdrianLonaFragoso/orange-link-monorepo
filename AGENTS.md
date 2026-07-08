@@ -105,6 +105,7 @@ Todas en `src/components/screens/`. La navegación es state-based: `Index.tsx` u
 | `ProteinCalculatorScreen.tsx` | Calculadora de proteína diaria |
 | `CreatineCalculatorScreen.tsx` | Calculadora de dosis de creatina |
 | `LoginScreen.tsx` | Login/registro con email + contraseña (JWT) |
+| `WizardScreen.tsx` | Onboarding 3 pasos (cuenta → perfil → foto) skippable, registra con datos completos |
 
 ### BottomNav (7 Tabs)
 
@@ -121,7 +122,7 @@ Home, Nutrition, Fasting, Training, Water, Supplements, Status — filtrable por
 ### API Client (`src/lib/api.ts`)
 
 ```typescript
-api.auth.login(email, password) | .register(name, email, password) | .logout() | .me()
+api.auth.login(email, password) | .register({ name, email, password, height?, weight?, age?, sex?, activityLevel?, avatarUrl? }) | .logout() | .me()
 api.dashboard.get()
 api.supplements.list() | .add(name) | .remove(id) | .toggle(id)
 api.hydration.get() | .updateGoal(goal) | .addIntake(amount) | .calculate(data)
@@ -241,11 +242,11 @@ Base: `/api/v1/` — las rutas marcadas con 🔒 requieren middleware auth.
 | POST | `/api/v1/calculators/protein` | Calcular proteína (weight, activityLevel) |
 | POST | `/api/v1/calculators/creatine` | Calcular creatina (weight, phase) |
 | **Auth** | | |
-| POST | `/api/v1/auth/register` | ❌ Público — Registrar nuevo usuario (name, email, password) |
+| POST | `/api/v1/auth/register` | ❌ Público — Registrar nuevo usuario (name, email, password, height?, weight?, age?, sex?, activityLevel?, avatarUrl?) |
 | POST | `/api/v1/auth/login` | ❌ Público — Iniciar sesión (email, password) → access + refresh tokens |
 | POST | `/api/v1/auth/refresh` | ❌ Público — Refrescar access token (body: refreshToken) |
 | POST | `/api/v1/auth/logout` | 🔒 Cerrar sesión (invalida refresh token) |
-| GET | `/api/v1/auth/me` | 🔒 Datos del usuario autenticado |
+| GET | `/api/v1/auth/me` | 🔒 Datos del usuario autenticado (incluye perfil completo) |
 | **Admin** | | |
 | GET | `/admin` | Panel HTML (login si no hay sesión) |
 | POST | `/admin/login` | Login con ADMIN_PASSWORD → cookie |
