@@ -63,6 +63,7 @@ orange-link-app/
 │   │   ├── SplashScreen.tsx  # Splash animado (2s)
 │   │   ├── PwaUpdater.tsx    # Notificador de actualización SW
 │   │   ├── MissionItem.tsx   # Item reutilizable de misión diaria
+│   │   ├── FastingFab.tsx    # FAB flotante de estado de ayuno (usado en NutritionScreen)
 │   │   ├── screens/          # Pantallas de la app (ver sección abajo)
 │   │   └── ui/               # shadcn/ui primitives (button, dialog, input, tabs, etc.)
 │   ├── hooks/
@@ -92,9 +93,9 @@ Todas en `src/components/screens/`. La navegación es state-based: `Index.tsx` u
 | Archivo | Propósito |
 |---|---|
 | `Dashboard.tsx` | Home: barra de progreso, grid 2x2 de módulos, misión diaria (5 items), misiones mensuales |
-| `NutritionScreen.tsx` | Plan de comidas actual, selección del día, alimentos permitidos/prohibidos |
+| `NutritionScreen.tsx` | Plan de comidas con plantillas (Keto Full 0 / Low Carb 2 / Mid Carb 6 / Balance Carb 12 porciones), período de dieta, contador interactivo de carbs, metas de peso/IMC/músculo, alimentos permitidos/prohibidos, FastingFab flotante |
 | `MealSelectionScreen.tsx` | Selección de comidas por categoría (desayuno/comida/cena/snack) |
-| `FastingScreen.tsx` | Tracker de ayuno intermitente (16:8, 14:10, 12:12), timer, configuración |
+| `FastingScreen.tsx` | Tracker de ayuno intermitente (16:8, 14:10, 12:12), timer, configuración, estado vacío con mensaje "Selecciona tu plan de ayuno" si no hay plan configurado |
 | `TrainingScreen.tsx` | Entrenamiento: vista semanal, ejercicios con reps/sets, intensidad, templates |
 | `HydrationScreen.tsx` | Tracker de agua: botones + cantidad, barra de progreso, calculadora |
 | `SupplementsScreen.tsx` | Checklist de suplementos (creatina, B12, magnesio, enzimas) |
@@ -114,10 +115,12 @@ Home, Nutrition, Fasting, Training, Water, Supplements, Status — filtrable por
 ### Estado Global (useAppStore)
 
 - **Ubicación**: `src/hooks/useAppStore.ts`
-- **Alcance**: misiones diarias, entrenamiento, suplementos, hidratación, ayuno, nutrición, estado corporal, comidas, perfil
+- **Alcance**: misiones diarias, entrenamiento, suplementos, hidratación, ayuno, nutrición (plan, porciones, protein/veggie gramaje, carbs consumidos, período), estado corporal, comidas, perfil
 - **Persistencia**: localStorage bajo clave `orangelink-state` (reseteo diario automático a medianoche CDMX)
 - **Patrón**: acciones optimistas (actualiza local → fire-and-forget al backend)
 - **Training defaults**: `defaultState` arranca con schedule/templates/restDays/dayLabels vacíos (sin rutinas precargadas)
+- **Fasting defaults**: `fastingPlan/fastingWindowStart/fastingWindowEnd/fastingEndDate` vacíos — muestra estado vacío hasta que el usuario configura su plan
+- **Nutrition defaults**: `nutritionPlan="Keto Full"`, `nutritionPortions=0`, `nutritionProteinG=150`, `nutritionVeggieG=400`, `nutritionCarbsConsumed=0` — se reinicia diariamente el contador de carbs
 
 ### API Client (`src/lib/api.ts`)
 
@@ -127,7 +130,7 @@ api.dashboard.get()
 api.supplements.list() | .add(name) | .remove(id) | .toggle(id)
 api.hydration.get() | .updateGoal(goal) | .addIntake(amount) | .calculate(data)
 api.fasting.get() | .update(data)
-api.nutrition.plans() | .current() | .updatePlan(name) | .updateMeals(meals)
+api.nutrition.plans() | .current() | .updatePlan({ planName, startDate?, endDate?, durationType? }) | .updateMeals(meals)
 api.training.get() | .update(data)
 api.status.get() | .history() | .create(data) | .updateTargets(targets) | .tips()
 api.user.profile.get() | .update(data)
@@ -190,7 +193,7 @@ orange-link-back/
 │       └── admin.ts
 ├── prisma/
 │   ├── schema.prisma         # Esquema de BD (10 modelos)
-│   └── seed.ts               # Seed: templates de ejercicios (sin rutinas predefinidas)
+│   └── seed.ts               # Seed: templates de ejercicios (sin rutinas predefinidas) + plantillas de nutrición
 ├── api/
 │   └── index.ts              # Entry point Vercel serverless
 ├── vercel.json               # Rutas → api/index.ts @vercel/node
@@ -229,9 +232,9 @@ Base: `/api/v1/` — las rutas marcadas con 🔒 requieren middleware auth.
 | POST | `/api/v1/hydration/intake` | Agregar consumo (incrementa) |
 | POST | `/api/v1/hydration/calculate` | Calcular recomendación (weight, activity, sex) |
 | **Nutrition** | | |
-| GET | `/api/v1/nutrition/plans` | Listar planes disponibles |
-| GET | `/api/v1/nutrition/current` | Plan actual + comidas del día |
-| PUT | `/api/v1/nutrition/plan` | Seleccionar/cambiar plan |
+| GET | `/api/v1/nutrition/plans` | Listar plantillas disponibles (con portions, proteinG, veggieG) |
+| GET | `/api/v1/nutrition/current` | Plan actual + comidas del día + período (startDate/endDate/durationType) |
+| PUT | `/api/v1/nutrition/plan` | Seleccionar/cambiar plantilla con planName, startDate, endDate, durationType |
 | PUT | `/api/v1/nutrition/meals` | Actualizar comidas del día |
 | **Supplements** | | |
 | GET | `/api/v1/supplements` | Suplementos + estado del día |
@@ -267,8 +270,8 @@ Modelos definidos en `prisma/schema.prisma`:
 | Supplement | supplements | id | userId, name (unique por user+name) |
 | TrainingConfig | training_configs | userId | intensity, endDate, schedule (JSON), templates (JSON), trainingCompleted, trainingExerciseCompleted, restDays, dayLabels |
 | FastingConfig | fasting_configs | userId | planType, windowStart, windowEnd, endDate |
-| NutritionPlan | nutrition_plans | id | name, description |
-| UserNutritionPlan | user_nutrition_plans | userId+nutritionPlanId | selectedAt |
+| NutritionPlan | nutrition_plans | id | name, description, portions, proteinG, veggieG |
+| UserNutritionPlan | user_nutrition_plans | userId+nutritionPlanId | selectedAt, startDate, endDate, durationType |
 | MonthlyMission | monthly_missions | id | userId, month, bodyFat |
 
 ### Auth
